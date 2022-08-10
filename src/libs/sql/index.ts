@@ -1,6 +1,6 @@
 /**
  * 簡易SQLite向けクエリビルダー
- * slonikを参参にして作成
+ * slonikを参考にして作成
  */
 
 export {

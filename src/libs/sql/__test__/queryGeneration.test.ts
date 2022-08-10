@@ -1,4 +1,4 @@
-import { sql } from '../sql';
+import { sql } from '..';
 
 test('クエリ作成', () => {
   const id = 10;

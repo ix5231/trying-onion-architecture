@@ -57,7 +57,17 @@ export function sql(queryDelim: TemplateStringsArray, ...params: Param[]): State
   };
 }
 
-type Row = Record<string, unknown>
+type Row = Record<string, unknown>;
+
+// 非Errorオブジェクトがthrowされる可能性は低く、テストする意味が薄いので除外
+/* istanbul ignore next */
+function failWith(e: unknown): never {
+  if (e instanceof Error) {
+    throw new DatabaseFailError('DBエラー', { cause: e });
+  } else {
+    throw new DatabaseFailError(`DBエラー: ${JSON.stringify(e)}`);
+  }
+}
 
 /**
  * データベースコネクション
@@ -83,11 +93,7 @@ export class Database {
     try {
       return this.#db.prepare(query.rawSqlQuery).all(...query.params);
     } catch (e) {
-      if (e instanceof Error) {
-        throw new DatabaseFailError('DBエラー', { cause: e });
-      } else {
-        throw new DatabaseFailError(`DBエラー: ${JSON.stringify(e)}`);
-      }
+      failWith(e);
     }
   }
   
@@ -118,26 +124,26 @@ export class Database {
    * @throws {DataIntegrityError} 複数行見つかった
    */
   maybeOne(query: Statement): Row | null {
+    let foundRows;
     try {
-      const foundRows = this.#db.prepare(query.rawSqlQuery).iterate(...query.params);
-      const row = foundRows.next();
-      if (row.done) {
-        return null;
-      }
-      const nextRow = foundRows.next();
-      if (!nextRow.done) {
-        throw new DataIntegrityError('結果が1行であることを予期していましたが、実際は複数行存在しています');
-      }
-      return row.value;
+      foundRows = this.#db.prepare(query.rawSqlQuery).iterate(...query.params);
     } catch (e) {
-      if (e instanceof Error) {
-        throw new DatabaseFailError('DBエラー', { cause: e });
-      } else {
-        throw new DatabaseFailError(`DBエラー: ${JSON.stringify(e)}`);
-      }
+      failWith(e);
     }
+
+    const row = foundRows.next();
+    if (row.done) {
+      return null;
+    }
+    const nextRow = foundRows.next();
+    if (!nextRow.done) {
+      throw new DataIntegrityError('結果が1行であることを予期していましたが、実際は複数行存在しています');
+    }
+    return row.value;
   }
   
+  // ただのライブラリのテストなので除外
+  /* istanbul ignore next */
   close(): void {
     this.#db.close();
   }
