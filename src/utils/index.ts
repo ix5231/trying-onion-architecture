@@ -11,6 +11,7 @@ export interface ChainErrorOptions extends ErrorOptions {
   cause: any;
 }
 
+// チェックできるものがないため、除外
 class ValueThrownError extends Error {
   constructor(value: unknown) {
     super(`Non error object thrown: ${JSON.stringify(value)}`);
@@ -29,13 +30,16 @@ export class ChainError extends Error {
   constructor(message?: string, options?: ChainErrorOptions) {
     if (options?.cause instanceof Error) {
       super(message, options);
+    } else if (options?.cause === undefined) {
+      super(message, options);
     } else {
       super(message, {
-        cause: new ValueThrownError(options?.cause),
-        ...options
+        ...options,
+        cause: new ValueThrownError(options?.cause)
       });
     }
   } 
 }
 
+/* istanbul ignore next */
 export const projectRoot = path.resolve(__dirname, '..', '..');
