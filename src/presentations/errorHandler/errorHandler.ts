@@ -1,12 +1,7 @@
-/**
- * エラーハンドラーの定義
- */
-
 import express from 'express';
-import { DatabaseFailError } from '../libs/sql';
-import { ChainError, ChainErrorOptions } from '../utils';
-import logger from '../logger';
-import { ZodError } from 'zod';
+import { DatabaseFailError } from '../../libs/sql';
+import logger from '../../logger';
+import { ServerError, APIValidationError } from './errors';
 
 const errors = {
   unknown: {
@@ -30,38 +25,10 @@ interface ErrorResponse {
   errorCode: typeof errors[keyof typeof errors]['errorCode'];
 }
 
-class ServerError extends ChainError {
-  constructor(message?: string, options?: ChainErrorOptions) {
-    super(message, options);
-    this.name = 'ServerError';
-  }
-}
-
-class APIValidationError extends ChainError {
-  constructor(message?: string, options?: ChainErrorOptions) {
-    super(message, options);
-    this.name = 'APIValidationError';
-  }
-}
-
 /**
- * zodエラーをこのアプリ用の例外に変換する
+ * エラーハンドラー
  */
-function zodErrorHandler(
-  err: unknown,
-  _req: express.Request,
-  _res: express.Response<ErrorResponse>,
-  next: express.NextFunction
-) {
-  if (err instanceof ZodError) {
-    // 変換
-    next(new APIValidationError('APIバリデーションエラー', { cause: err } ));
-  }
-  // それ以外は素通し
-  next(err);
-}
-
-function errorHandler(
+export function errorHandler(
   err: unknown,
   _req: express.Request,
   res: express.Response<ErrorResponse>
@@ -86,5 +53,3 @@ function errorHandler(
     return errorWith('unknown');
   }
 }
-
-export const handler = [zodErrorHandler, errorHandler];
