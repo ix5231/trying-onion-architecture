@@ -8,4 +8,7 @@ module.exports = {
     '!src/{db,logger}.ts',
   ],
   coverageReporters: ['text', 'html'],
+  moduleNameMapper: {
+    '^~(.*)$': '<rootDir>/src/$1',
+  },
 };
