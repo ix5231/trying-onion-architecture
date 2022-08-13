@@ -1,6 +1,8 @@
 import { z } from 'zod';
 
-export const accountValidator = z.object({
+export const loginAccountValidator = z.object({
   id: z.string(),
   password: z.string(),
 });
+
+export type LoginAccount = z.infer<typeof loginAccountValidator>;
